@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time
 import serial
 
@@ -112,8 +113,8 @@ class GrblComm(serial.Serial):
 
     def add_sys_cmd_methods(self):
         for cmd_name in self.SYS_CMD_DICT:
-            setattr(GrblComm, f'get_{cmd_name}', self.make_sys_cmd_getter(cmd_name))
-            setattr(GrblComm, f'set_{cmd_name}', self.make_sys_cmd_setter(cmd_name))
+            setattr(GrblComm, 'get_{}'.format(cmd_name), self.make_sys_cmd_getter(cmd_name))
+            setattr(GrblComm, 'set_{}'.format(cmd_name), self.make_sys_cmd_setter(cmd_name))
 
     def make_sys_cmd_getter(self, name):
         def sys_cmd_getter(self):
@@ -125,7 +126,7 @@ class GrblComm(serial.Serial):
         value_type = self.SYS_CMD_TYPE_DICT[name]
         def sys_cmd_setter(self, value):
             converted_value = self.SYS_CMD_VALUE_CONVERTERS[value_type](value)
-            cmd = f'{self.SYS_CMD_DICT[name]}={converted_value}\n'
+            cmd = '{0}={1}\n'.format(self.SYS_CMD_DICT[name], converted_value)
             rsp_lines = self.send_cmd(cmd)
             return rsp_lines[-1]
         return sys_cmd_setter
@@ -154,7 +155,7 @@ class GrblComm(serial.Serial):
         settings_dict = {}
         for cmd_key, cmd_val in self.SYS_CMD_DICT.items():
             for line in line_list:
-                if f'{cmd_val}=' in line:
+                if '{}='.format(cmd_val) in line:
                     val_str = line.split()[0]
                     val_pos = val_str.find('=')+1
                     val_str = val_str[val_pos:]
@@ -178,8 +179,8 @@ class GrblComm(serial.Serial):
 
     def get_list_of_sys_cmd(self):
         sys_cmd = []
-        sys_cmd.extend([f'get_{k}' for k in self.SYS_CMD_DICT])
-        sys_cmd.extend([f'set_{k}' for k in self.SYS_CMD_DICT])
+        sys_cmd.extend(['get_{}'.format(k) for k in self.SYS_CMD_DICT])
+        sys_cmd.extend(['set_{}'.format(k) for k in self.SYS_CMD_DICT])
         return sys_cmd
 
     def print_sys_cmd(self):
@@ -190,7 +191,7 @@ class GrblComm(serial.Serial):
     def print_settings(self):
         settings_dict = self.get_settings()
         for k,v in settings_dict.items():
-            print(f'{k}: {v}')
+            print('{0}: {1}'.format(k,v))
 
     def print_help(self):
         cmd = self.CMD_HELP 
@@ -199,7 +200,7 @@ class GrblComm(serial.Serial):
             print(line)
 
     def send_cmd(self,cmd):
-        self.write(f'{cmd}\n'.encode())
+        self.write('{}\n'.format(cmd).encode())
         ok = True
         error_msg = ''
         line_list = []
@@ -232,18 +233,18 @@ class GrblComm(serial.Serial):
             while sum(char_cnt_list) >= self.RX_BUFFER_SIZE | self.in_waiting:
                 rsp = self.readline().decode('UTF-8').strip()
                 if rsp.find('ok') < 0 and rsp.find('error') < 0:
-                    raise RuntimeError(f'unexpected grbl response: {rsp}')
+                    raise RuntimeError('unexpected grbl response: {}'.format(rsp))
                 else:
                     gcode_cnt += 1
-                    grbl_out.append(f'{rsp}: {gcode_cnt}') 
+                    grbl_out.append('{0}: {1}'.format(rsp,gcode_cnt)) 
                     del char_cnt_list[0]
             if verbose: 
-                print(f'SND: {num} : {cmd}')
-            self.write(f'{cmd}\n'.encode())
+                print('SND: {0} : {1}'.format(num, cmd))
+            self.write('{}\n'.format(cmd).encode())
             if verbose:
-                print(f'BUF: {sum(char_cnt_list)}', end='')
+                print('BUF: {}'.format(sum(char_cnt_list)), end='')
                 if grbl_out:
-                    print(f' REC: {",".join(grbl_out)}')
+                    print(' REC: {}'.format(",".join(grbl_out)))
                 else:
                     print()
             
@@ -255,13 +256,13 @@ class GrblComm(serial.Serial):
         while gcode_cnt < len(gcode_list):
             rsp = self.readline().decode('UTF-8').strip()
             if rsp.find('ok') < 0 and rsp.find('error') < 0:
-                raise RuntimeError(f'unexpected grbl response: {rsp}')
+                raise RuntimeError('unexpected grbl response: {}'.format(rsp))
             else:
                 gcode_cnt += 1
-                grbl_out = f'{rsp}: {gcode_cnt}' 
+                grbl_out = '{0}: {0}'.format(rsp, gcode_cnt) 
                 del char_cnt_list[0]
                 if verbose:
-                    print(f'BUF: {sum(char_cnt_list)} REC: {grbl_out}')
+                    print('BUF: {0} REC: {1}'.format(sum(char_cnt_list), grbl_out))
 
         # Wait until system returns to the idle state
         done = False
