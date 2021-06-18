@@ -106,7 +106,7 @@ class GrblComm(serial.Serial):
 
 
     def __init__(self, port='/dev/ttyACM0', baudrate=115200, timeout=None):
-        super().__init__(port, baudrate=baudrate, timeout=timeout)
+        super(GrblComm,self).__init__(port, baudrate=baudrate, timeout=timeout)
         self.wakeup()
         time.sleep(self.RESET_DT)
         self.flushInput()
