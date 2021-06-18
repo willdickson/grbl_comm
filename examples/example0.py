@@ -2,20 +2,26 @@ from grbl_comm import GrblComm
 
 comm = GrblComm()
 
-print()
-comm.print_settings()
-
-print()
 status = comm.get_status()
 print(status)
 
-gcode_list = ['F400', 'G1 X10', 'G1 X30', 'G1 X0', 'G2 X0 Y0 I10']
-
+gcode_list = ['F400.0', 'G0 X10']
 comm.send_gcode(gcode_list, verbose=True)
 
-print()
-status = comm.get_status()
-print(status)
+print(comm.get_status())
+
+
+#print()
+#comm.print_settings()
+#
+#print()
+#status = comm.get_status()
+#print(status)
+#
+#
+#print()
+#status = comm.get_status()
+#print(status)
 
 
 #print()

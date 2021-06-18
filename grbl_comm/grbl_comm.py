@@ -79,6 +79,7 @@ class GrblComm(serial.Serial):
             'homing_cycle'             : bool,
             'homing_dir_invert_mask'   : int,
             'homing_feed_mm_per_min'   : float,
+
             'homing_seek_mm_per_min'   : float,
             'homing_debounce_msec'     : int,
             'homing_pull_off_mm'       : float,
@@ -128,7 +129,7 @@ class GrblComm(serial.Serial):
             converted_value = self.SYS_CMD_VALUE_CONVERTERS[value_type](value)
             cmd = '{0}={1}\n'.format(self.SYS_CMD_DICT[name], converted_value)
             rsp_lines = self.send_cmd(cmd)
-            return rsp_lines[-1]
+            self.flushInput() # not sure why this is required ... extra stuff comming back??
         return sys_cmd_setter
 
     def wakeup(self):
@@ -140,7 +141,18 @@ class GrblComm(serial.Serial):
         line = self.readline()
         line = line.strip()
         line = line.decode('UTF-8')
-        return line
+        line_list = line[1:-1].replace(':',',').split(',')
+        status = {'mode': line_list[0].lower()} 
+        pos = 1
+        while pos < len(line_list):
+            if line_list[pos] in ('MPos','WPos'):
+                k = line_list[pos]
+                x = float(line_list[pos+1])
+                y = float(line_list[pos+2])
+                z = float(line_list[pos+3])
+                status[k] = {'x': x, 'y': y, 'z': z}
+                pos += 4
+        return status 
 
     def reset(self):
         cmd = self.CMD_RESET_GRBL
@@ -268,7 +280,7 @@ class GrblComm(serial.Serial):
         done = False
         while not done:
             status = self.get_status()
-            if 'idle' in status.lower():
+            if status['mode'] == 'idle':
                 done = True
             time.sleep(self.IDLE_POLL_DT)
 
