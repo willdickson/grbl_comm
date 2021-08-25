@@ -12,6 +12,20 @@ def dummy_send_converter(value):
 def bool_send_converter(value):
     return int(value)
 
+def extract_status_from_line(line): 
+    line_list = line[1:-1].replace(':',',').split(',')
+    status = {'mode': line_list[0].lower()} 
+    pos = 1
+    while pos < len(line_list):
+        if line_list[pos] in ('MPos','WPos'):
+            k = line_list[pos]
+            x = float(line_list[pos+1])
+            y = float(line_list[pos+2])
+            z = float(line_list[pos+3])
+            status[k] = {'x': x, 'y': y, 'z': z}
+            pos += 4
+    return status 
+
 # -----------------------------------------------------------------------------
 
 
@@ -19,9 +33,11 @@ class GrblComm(serial.Serial):
 
     RESET_DT = 2.0
     IDLE_POLL_DT = 0.25
-    RX_BUFFER_SIZE = 128
+    RX_BUFFER_SIZE = 126
     CMD_HELP = '$'
     CMD_GET_STATUS = '?'
+    CMD_FEED_HOLD = '!'
+    CMD_CYCLE_START = '~'
     CMD_GET_SETTINGS = '$$'
     CMD_GET_GCODE_PARAM = '$#'
     CMD_GET_PARSER_STATE = '$G'
@@ -138,21 +154,8 @@ class GrblComm(serial.Serial):
     def get_status(self):
         cmd = self.CMD_GET_STATUS
         self.write(cmd.encode()) 
-        line = self.readline()
-        line = line.strip()
-        line = line.decode('UTF-8')
-        line_list = line[1:-1].replace(':',',').split(',')
-        status = {'mode': line_list[0].lower()} 
-        pos = 1
-        while pos < len(line_list):
-            if line_list[pos] in ('MPos','WPos'):
-                k = line_list[pos]
-                x = float(line_list[pos+1])
-                y = float(line_list[pos+2])
-                z = float(line_list[pos+3])
-                status[k] = {'x': x, 'y': y, 'z': z}
-                pos += 4
-        return status 
+        line = self.readline().decode('UTF-8').strip()
+        return extract_status_from_line(line)
 
     def reset(self):
         cmd = self.CMD_RESET_GRBL
