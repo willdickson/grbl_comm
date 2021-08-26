@@ -36,12 +36,13 @@ class GrblComm(serial.Serial):
     RX_BUFFER_SIZE = 126
     CMD_HELP = '$'
     CMD_GET_STATUS = '?'
-    CMD_FEED_HOLD = '!'
+    CMD_FEEDHOLD = '!'
     CMD_CYCLE_START = '~'
     CMD_GET_SETTINGS = '$$'
     CMD_GET_GCODE_PARAM = '$#'
     CMD_GET_PARSER_STATE = '$G'
     CMD_GET_BUILD_INFO = '$I'
+    CMD_KILL_ALARM_LOCK = '$X'
     CMD_RESET_GRBL = '\x18' 
 
     SYS_CMD_DICT = {
@@ -156,6 +157,18 @@ class GrblComm(serial.Serial):
         self.write(cmd.encode()) 
         line = self.readline().decode('UTF-8').strip()
         return extract_status_from_line(line)
+
+    def feedhold(self):
+        self.write(f'{self.CMD_FEEDHOLD}'.encode())
+
+    def cycle_start(self):
+        cmd = self.CMD_CYCLE_START
+        self.write(f'{self.CMD_CYCLE_START}'.encode())
+
+    def kill_alarm_lock(self):
+        self.write(f'{self.CMD_KILL_ALARM_LOCK}\n'.encode())
+        line = self.readline()
+        return line
 
     def reset(self):
         cmd = self.CMD_RESET_GRBL
