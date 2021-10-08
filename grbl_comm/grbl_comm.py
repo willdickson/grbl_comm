@@ -13,17 +13,26 @@ def bool_send_converter(value):
     return int(value)
 
 def extract_status_from_line(line): 
-    line_list = line[1:-1].replace(':',',').split(',')
+    line_tmp = line[1:-1].replace(':',',')
+    line_tmp = line_tmp.replace('|', ',')
+    line_list = line_tmp.split(',')
     status = {'mode': line_list[0].lower()} 
-    pos = 1
+    pos = 0
     while pos < len(line_list):
-        if line_list[pos] in ('MPos','WPos'):
-            k = line_list[pos]
+        if 'MPos' in line_list[pos]:
             x = float(line_list[pos+1])
             y = float(line_list[pos+2])
             z = float(line_list[pos+3])
-            status[k] = {'x': x, 'y': y, 'z': z}
+            status['MPos'] = {'x': x, 'y': y, 'z': z}
             pos += 4
+        elif 'WPos' in line_list[pos]:
+            x = float(line_list[pos+1])
+            y = float(line_list[pos+2])
+            z = float(line_list[pos+3])
+            status['WPos'] = {'x': x, 'y': y, 'z': z}
+            pos += 4
+        else:
+            pos += 1
     return status 
 
 # -----------------------------------------------------------------------------
